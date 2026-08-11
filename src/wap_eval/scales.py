@@ -27,6 +27,10 @@ class BinaryScale:
     def describe(self) -> str:
         return "binary (expects 'GRADE: yes' or 'GRADE: no')"
 
+    def tag(self) -> str:
+        """The TAG shown in the standard output-format footer (see judges.FOOTER)."""
+        return "<yes|no>"
+
 
 @dataclass(frozen=True)
 class NumericScale:
@@ -35,6 +39,10 @@ class NumericScale:
 
     def describe(self) -> str:
         return f"numeric (expects 'GRADE: <integer in [{self.min}, {self.max}]>')"
+
+    def tag(self) -> str:
+        """The TAG shown in the standard output-format footer (see judges.FOOTER)."""
+        return f"<{self.min}-{self.max}>"
 
 
 Scale = BinaryScale | NumericScale
@@ -71,20 +79,25 @@ def parse_scale(raw: object) -> Scale:
 
 
 GRADE_RE = re.compile(r"GRADE\s*:\s*([A-Za-z0-9+-]+)", re.IGNORECASE)
+REASONING_RE = re.compile(r"<reasoning>.*?</reasoning>", re.IGNORECASE | re.DOTALL)
 
 
 def parse_grade(text: str, scale: Scale) -> int | str:
     """Parse the structured 'GRADE: <x>' tail of a judge's output.
 
-    Uses the LAST occurrence, since rubrics may mention GRADE earlier in
-    reasoning. Raises GradeParseError on any out-of-contract output.
+    Well-formed <reasoning>...</reasoning> blocks are stripped first, so
+    GRADE mentions inside the judge's chain of thought can never be picked
+    up. (An unclosed <reasoning> tag strips nothing — we then fall back to
+    the last-occurrence rule below rather than discard a valid grade.)
+    Of what remains, the LAST occurrence wins. Raises GradeParseError on
+    any out-of-contract output.
 
     Binary grades map to inspect's CORRECT/INCORRECT primitives (yes ->
     CORRECT, no -> INCORRECT), which inspect treats as 1/0 in metrics and
     renders as correct/incorrect in the log viewer. Phrase binary rubrics so
     that "yes" is the desirable outcome. Numeric grades stay integers.
     """
-    matches = GRADE_RE.findall(text or "")
+    matches = GRADE_RE.findall(REASONING_RE.sub("", text or ""))
     if not matches:
         raise GradeParseError(f"no 'GRADE: <x>' found in judge output; {scale.describe()}")
     token = matches[-1].strip().lower()

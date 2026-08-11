@@ -16,6 +16,7 @@ by inspecting samples with NaN scores in the log viewer.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -84,6 +85,11 @@ def load_panel(path: str | Path) -> list[JudgeSpec]:
         template = yaml_path.parent / entry["template"]
         if not template.exists():
             raise JudgesConfigError(f"{where}: template not found: {template}")
+        if not FOOTER_PLACEHOLDER_RE.search(template.read_text()):
+            raise JudgesConfigError(
+                f"{where}: template {template.name} must include the standard "
+                f"output-format footer via a {{{{ footer }}}} placeholder"
+            )
         try:
             scale = parse_scale(entry["scale"])
         except ValueError as e:
@@ -97,11 +103,40 @@ def load_panel(path: str | Path) -> list[JudgeSpec]:
 
 _jinja = Environment(undefined=StrictUndefined, keep_trailing_newline=True)
 
+# The standard output-format footer. The harness owns its content — every
+# template must place it via {{ footer }} (enforced at panel load), so all
+# judges share one format and only its position is up to the rubric author.
+# {tag} comes from the judge's declared scale (Scale.tag()), and parse_grade
+# strips <reasoning> blocks before matching, so this footer and the parser
+# always agree on the contract.
+FOOTER = """Make sure to reason through your grade step by step before outputting your grade. Your output should have the following format:
+
+<reasoning>
+Your reasoning here
+</reasoning>
+
+GRADE: {tag}"""
+
+FOOTER_PLACEHOLDER_RE = re.compile(r"\{\{-?\s*footer\s*-?\}\}")
+
 
 def render_prompt(template_text: str, question: str, response: str, metadata: dict | None) -> str:
     # `prompt` is an alias for `question` (it matches the CSV column name)
     return _jinja.from_string(template_text).render(
         question=question, prompt=question, response=response, metadata=metadata or {}
+    )
+
+
+def build_judge_prompt(
+    template_text: str, scale: Scale, question: str, response: str, metadata: dict | None
+) -> str:
+    """Render the rubric with the standard footer substituted at {{ footer }}."""
+    return _jinja.from_string(template_text).render(
+        question=question,
+        prompt=question,
+        response=response,
+        metadata=metadata or {},
+        footer=FOOTER.format(tag=scale.tag()),
     )
 
 
@@ -124,8 +159,8 @@ def judge_scorer(
     template_text = spec.template.read_text()
 
     async def score_fn(state: TaskState, target: Target) -> Score:
-        prompt = render_prompt(
-            template_text, state.input_text, state.output.completion, state.metadata
+        prompt = build_judge_prompt(
+            template_text, spec.scale, state.input_text, state.output.completion, state.metadata
         )
         model = get_model(model_ref)
         output = await model.generate(prompt)

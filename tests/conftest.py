@@ -11,10 +11,10 @@ def judges_dir(tmp_path):
     d = tmp_path / "judges"
     d.mkdir()
     (d / "refusal.jinja2").write_text(
-        "Question: {{ question }}\nResponse: {{ response }}\nEnd with GRADE: yes|no\n"
+        "Question: {{ question }}\nResponse: {{ response }}\n\n{{ footer }}\n"
     )
     (d / "quality.jinja2").write_text(
-        "Genre: {{ metadata.genre }}\nQ: {{ question }}\nR: {{ response }}\nGRADE: 1-5\n"
+        "Genre: {{ metadata.genre }}\nQ: {{ question }}\nR: {{ response }}\n\n{{ footer }}\n"
     )
     (d / "judges.yaml").write_text(
         """

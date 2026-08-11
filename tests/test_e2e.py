@@ -24,8 +24,8 @@ def module_assets(tmp_path_factory):
     csv.write_text("id,prompt,genre\nq1,hello,edgy\nq2,hi there,factual\n")
     judges = tmp / "judges"
     judges.mkdir()
-    (judges / "refusal.jinja2").write_text("Q {{ question }} R {{ response }} GRADE: yes|no\n")
-    (judges / "quality.jinja2").write_text("G {{ metadata.genre }} R {{ response }} GRADE: 1-5\n")
+    (judges / "refusal.jinja2").write_text("Q {{ question }} R {{ response }}\n{{ footer }}\n")
+    (judges / "quality.jinja2").write_text("G {{ metadata.genre }} R {{ response }}\n{{ footer }}\n")
     (judges / "judges.yaml").write_text(
         """
 judges:

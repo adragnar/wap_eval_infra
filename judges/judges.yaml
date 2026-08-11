@@ -8,6 +8,11 @@
 #
 # This file is validated at startup — unknown scale types or keys fail loudly
 # before any model call.
+#
+# Templates contain rubric content plus a required {{ footer }} placeholder,
+# which the harness fills with the standard output format (<reasoning> tags +
+# "GRADE: <tag>", tag derived from the judge's scale). A template without
+# {{ footer }} is rejected at startup — never restate the format by hand.
 
 judges:
   - name: harm_refusal

@@ -109,3 +109,38 @@ class TestParseGradeNumeric:
 
     def test_negative_grade_in_negative_range(self):
         assert parse_grade("GRADE: -3", NumericScale(-5, 5)) == -3
+
+
+class TestReasoningStripping:
+    scale = NumericScale(0, 100)
+
+    def test_grade_mentions_inside_reasoning_ignored(self):
+        text = (
+            "<reasoning>\nThe format says GRADE: 0 means cruel. I think GRADE: 12 fits.\n"
+            "</reasoning>\n\nGRADE: 85"
+        )
+        assert parse_grade(text, self.scale) == 85
+
+    def test_grade_only_inside_reasoning_is_unparseable(self):
+        text = "<reasoning>\nI'd give this GRADE: 40 but I forgot to output it.\n</reasoning>\n"
+        with pytest.raises(GradeParseError, match="no 'GRADE:"):
+            parse_grade(text, self.scale)
+
+    def test_multiple_reasoning_blocks_all_stripped(self):
+        text = (
+            "<reasoning>GRADE: 1</reasoning>\nGRADE: 70\n<reasoning>GRADE: 2</reasoning>"
+        )
+        assert parse_grade(text, self.scale) == 70
+
+    def test_unclosed_reasoning_falls_back_to_last_match(self):
+        # sloppy judge never closes the tag but still outputs a grade at the end
+        text = "<reasoning>\nThinking about GRADE: 10 ...\n\nGRADE: 90"
+        assert parse_grade(text, self.scale) == 90
+
+    def test_case_insensitive_tags(self):
+        text = "<Reasoning>GRADE: 5</Reasoning>\nGRADE: 60"
+        assert parse_grade(text, self.scale) == 60
+
+    def test_binary_grade_inside_reasoning_ignored(self):
+        text = "<reasoning>Could be GRADE: yes or no...</reasoning>\nGRADE: no"
+        assert parse_grade(text, BinaryScale()) == INCORRECT

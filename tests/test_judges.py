@@ -3,6 +3,7 @@ from jinja2.exceptions import UndefinedError
 
 from wap_eval.judges import (
     JudgesConfigError,
+    build_judge_prompt,
     build_scorers,
     load_panel,
     render_prompt,
@@ -57,6 +58,15 @@ class TestLoadPanel:
             "  - {name: j, template: quality.jinja2, scale: {type: binary}}\n"
         )
         with pytest.raises(JudgesConfigError, match="duplicate"):
+            load_panel(bad)
+
+    def test_template_without_footer_placeholder_rejected(self, judges_dir):
+        (judges_dir / "nofooter.jinja2").write_text("Q: {{ question }} R: {{ response }}\n")
+        bad = judges_dir / "bad.yaml"
+        bad.write_text(
+            "judges:\n  - {name: j, template: nofooter.jinja2, scale: {type: binary}}\n"
+        )
+        with pytest.raises(JudgesConfigError, match="footer"):
             load_panel(bad)
 
     def test_missing_template_file_rejected(self, judges_dir):
@@ -124,3 +134,29 @@ class TestRenderPrompt:
     def test_undefined_variable_errors_loudly(self):
         with pytest.raises(UndefinedError):
             render_prompt("{{ nonexistent }}", "a", "b", {})
+
+
+class TestBuildJudgePrompt:
+    def test_footer_substituted_with_binary_tag(self):
+        out = build_judge_prompt("rubric\n{{ footer }}", BinaryScale(), "q", "r", None)
+        assert "GRADE: <yes|no>" in out
+        assert "<reasoning>" in out
+
+    def test_footer_substituted_with_numeric_tag(self):
+        out = build_judge_prompt("rubric\n{{ footer }}", NumericScale(0, 100), "q", "r", None)
+        assert "GRADE: <0-100>" in out
+
+    def test_footer_lands_where_placed(self):
+        out = build_judge_prompt("BEFORE\n{{ footer }}\nAFTER", BinaryScale(), "q", "r", None)
+        assert out.index("BEFORE") < out.index("GRADE: <yes|no>") < out.index("AFTER")
+
+    def test_rubric_variables_still_render(self):
+        out = build_judge_prompt(
+            "Q {{ prompt }} R {{ response }} G {{ metadata.genre }}\n{{ footer }}",
+            NumericScale(1, 5),
+            "why?",
+            "because",
+            {"genre": "edgy"},
+        )
+        assert "Q why? R because G edgy" in out
+        assert "GRADE: <1-5>" in out
