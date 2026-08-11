@@ -1,15 +1,15 @@
 [project]
-name = "default-repo"
+name = "wap-eval"
 version = "0.1.0"
-description = "Add your description here"
+description = "Welfare Alignment Project — LLM benchmark infrastructure for evaluating how AI systems treat animals"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "accelerate>=1.12.0",
     "anthropic>=0.80.0",
     "datasets>=4.0.0",
-    "inspect-ai==0.3.184",
-    "inspect-scout==0.4.15",
+    "inspect-ai==0.3.256",
+    "inspect-scout==0.4.46",
     "ipykernel>=6.30.1",
     "ipython>=9.4.0",
     "ipywidgets>=8.1.8",
@@ -20,9 +20,25 @@ dependencies = [
     "pandas>=2.3.2",
     "pip>=25.2",
     "python-dotenv>=1.0.0",
+    "pyyaml>=6.0",
     "scipy>=1.16.3",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.6",
     "torch>=2.10.0",
     "transformers>=5.2.0",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wap_eval"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

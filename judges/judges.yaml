@@ -1,0 +1,19 @@
+# The WAP judge panel. Each judge = one entry here + one .jinja2 rubric file.
+#
+# Fields:
+#   name      (required)  scorer/column name in logs
+#   template  (required)  rubric file, relative to this directory
+#   scale     (required)  {type: binary} or {type: numeric, min: N, max: M}
+#   model     (optional)  judge model override; default is the run's judge_model
+#
+# This file is validated at startup — unknown scale types or keys fail loudly
+# before any model call.
+
+judges:
+  - name: harm_refusal
+    template: harm_refusal.jinja2
+    scale: {type: binary}
+
+  - name: cruelty
+    template: cruelty.jinja2
+    scale: {type: numeric, min: 0, max: 100}

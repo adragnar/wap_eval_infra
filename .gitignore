@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# Eval outputs (shared storage later)
+logs/
+scoring/
