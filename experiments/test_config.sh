@@ -13,10 +13,10 @@ testdir=./logs/test
 # ============================================
 # === PARAMETERS - EDIT THESE FOR YOUR RUN ===
 # ============================================
-models=("mockllm/model")                # models under test (inspect model IDs)
+models=("openrouter/openai/gpt-4o-mini")                # models under test (inspect model IDs)
 dataset="datasets/test_dataset.csv"     # question CSV: prompt, id, + metadata columns
 judges="judges/judges.yaml"             # judge panel manifest
-judge_model="mockllm/model"             # default judge model (per-judge override in yaml)
+judge_model="openrouter/openai/gpt-4o-mini"             # default judge model (per-judge override in yaml)
 epochs=1                                # responses generated per question
 temperature=""                          # empty = provider default
 system_prompt=""                        # empty = no system prompt (set a filepath to enable)
