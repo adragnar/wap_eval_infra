@@ -15,10 +15,12 @@ uv run python -m wap_eval.scoring init|run|drop  # rubric iteration in scoring/ 
 uv run inspect view --log-dir <batch_dir>      # browse results
 ```
 
-Experiment configs are copies of `experiments/test_config.sh` living in the repo root
+Experiment configs are copies of `experiments/test_config.sh` (generation) or
+`experiments/replay_config.sh` (pre-generated responses) living in the repo root
 (e.g. `openai_live.sh`); all run parameters are documented in
-`docs/evaluation_parameters.md`. The two core workflows are step-by-step guides:
-`docs/run_eval.md` (run an eval) and `docs/run_rescoring.md` (iterate on judges).
+`docs/evaluation_parameters.md`. The three core workflows are step-by-step guides:
+`docs/run_eval.md` (run an eval), `docs/run_replay.md` (judge responses generated
+elsewhere) and `docs/run_rescoring.md` (iterate on judges).
 
 ## Hard rules
 
@@ -28,6 +30,8 @@ Experiment configs are copies of `experiments/test_config.sh` living in the repo
   `src/`, keep `uv run pytest` green. Use `mockllm/model` in tests — never real APIs.
 - **Never break the dataset contract**: CSVs have `prompt` + `id`; every other column
   must keep passing through to `Sample.metadata` untouched (arbitrary future columns).
+  Replay CSVs add a response column, stripped before the contract applies so replay
+  samples carry exactly the metadata a generation run would.
 - **Scale registry is closed and validated**: judge scales are `{type: binary}` or
   `{type: numeric, min, max}`, checked at load (`src/wap_eval/scales.py`). New scale
   types get a registry branch + tests, never ad-hoc parsing.

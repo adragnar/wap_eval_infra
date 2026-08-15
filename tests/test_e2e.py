@@ -103,7 +103,7 @@ class TestScoringWorkspace:
         assert json.loads((workspace / "scorer_versions.json").read_text()) == []
 
     def test_init_refuses_a_workspace_as_source(self, workspace, module_assets):
-        with pytest.raises(scoring.ScoringError, match="generation runs"):
+        with pytest.raises(scoring.ScoringError, match="generation or replay runs"):
             scoring.cmd_init(
                 str(workspace), name=None, scoring_root=str(module_assets["tmp"] / "scoring")
             )

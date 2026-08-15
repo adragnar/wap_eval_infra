@@ -107,10 +107,10 @@ def cmd_init(source_dir: str, name: str | None, scoring_root: str) -> Path:
     if not _eval_files(src):
         raise ScoringError(f"no .eval logs found in {src}")
     src_manifest = read_manifest(src)
-    if src_manifest is not None and src_manifest.get("kind") != "generate":
+    if src_manifest is not None and src_manifest.get("kind") not in ("generate", "replay"):
         raise ScoringError(
             f"{src} is kind '{src_manifest.get('kind')}'; workspaces must be "
-            f"created from generation runs"
+            f"created from generation or replay runs"
         )
     if name is None:
         name = "iter_" + re.sub(r"^\d+_", "", src.name)

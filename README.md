@@ -14,6 +14,8 @@ and judge rubrics. Built on [inspect-ai](https://inspect.aisi.org.uk/).
 
 - **Run an eval** — [docs/run_eval.md](docs/run_eval.md): drop a question CSV in
   `datasets/`, copy `experiments/test_config.sh`, edit the parameter block, run.
+- **Replay pre-generated responses** — [docs/run_replay.md](docs/run_replay.md): judge
+  responses collected by hand from a CSV, with no model under test ever called.
 - **Iterate on scorers** — [docs/run_rescoring.md](docs/run_rescoring.md): revise
   judge rubrics and re-score an existing run's responses in a scoring workspace,
   without re-running any model under test.

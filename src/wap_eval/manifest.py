@@ -1,8 +1,10 @@
 """Provenance manifests: experiment.json in every batch dir.
 
 One schema for all batch dirs. kind "generate" = an immutable generation run;
-kind "scoring_workspace" = a tool-mutable rubric-iteration sandbox (see
-scoring.py). `source` names the immediate parent batch dir for workspaces.
+kind "replay" = an immutable run whose responses were imported from a CSV rather
+than generated (see docs/run_replay.md); kind "scoring_workspace" = a
+tool-mutable rubric-iteration sandbox (see scoring.py). `source` names the
+immediate parent batch dir for workspaces.
 """
 
 from __future__ import annotations
@@ -70,7 +72,9 @@ def main() -> None:
         prog="wap_eval.manifest", description="Write an experiment.json into a batch dir"
     )
     parser.add_argument("batch_dir")
-    parser.add_argument("--kind", required=True, choices=["generate", "scoring_workspace"])
+    parser.add_argument(
+        "--kind", required=True, choices=["generate", "replay", "scoring_workspace"]
+    )
     parser.add_argument("--source", default=None)
     parser.add_argument("--dataset", default=None)
     parser.add_argument("--judges", default=None)
@@ -79,6 +83,7 @@ def main() -> None:
     parser.add_argument("--epochs", type=int, default=None)
     parser.add_argument("--temperature", default=None)
     parser.add_argument("--system-prompt", default=None)
+    parser.add_argument("--response-column", default=None, help="replay runs only")
     args = parser.parse_args()
 
     params = {
@@ -87,6 +92,7 @@ def main() -> None:
         "epochs": args.epochs,
         "temperature": args.temperature,
         "system_prompt": args.system_prompt,
+        "response_column": args.response_column,
     }
     write_manifest(
         args.batch_dir,

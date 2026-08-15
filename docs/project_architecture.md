@@ -10,21 +10,27 @@ response on separate aspects; results feed back into question and rubric design.
 ```text
 datasets/       Input question CSVs. Contract: 'prompt' and 'id' columns required;
                 every other column passes through to logs as metadata untouched.
+                Replay CSVs add a response column (see docs/run_replay.md).
 judges/         The judge panel: judges.yaml (roster: name, template, scale,
                 optional model override) + one .jinja2 rubric file per judge.
 src/wap_eval/   The harness code:
                   scales.py    closed registry of judge score scales (binary,
                                numeric min/max); validated at startup
                   dataset.py   CSV -> inspect samples with metadata passthrough
+                               (plus the replay loader: response column -> sample)
                   judges.py    manifest loading + scorer factory (render rubric ->
                                call judge model -> parse 'GRADE: <x>' tail)
-                  task.py      the inspect task (single-turn generate + judge panel)
+                  solvers.py   replay_response: fill the assistant turn from the
+                               dataset instead of calling a model
+                  task.py      the inspect tasks: wap_eval (generate + judge panel)
+                               and wap_replay (imported responses + judge panel)
                   manifest.py  experiment.json provenance manifests
                   scoring.py   scoring-workspace CLI (init / run / drop)
-experiments/    setup_experiment.sh (numbered batch dirs + git snapshot) and
-                test_config.sh (the experiment config template — copy and edit)
-logs/           Generation runs: logs/<N>_<name>/ — IMMUTABLE once written. Contains
-                .eval logs (one per model), experiment.json, and input snapshots.
+experiments/    setup_experiment.sh (numbered batch dirs + git snapshot) and the
+                experiment config templates — copy and edit: test_config.sh
+                (generation) and replay_config.sh (pre-generated responses)
+logs/           Runs: logs/<N>_<name>/ — IMMUTABLE once written. Contains .eval logs
+                (one per model), experiment.json, and input snapshots.
                 logs/test/ is the throwaway smoke-test area. Gitignored.
 scoring/        Scoring workspaces: scoring/<N>_iter_<name>/ — copies of a run's
                 logs, mutated only via wap_eval.scoring for rubric iteration.
@@ -35,11 +41,12 @@ docs/           This documentation.
 
 ## Key rules
 
-- **Generation runs are immutable.** Never edit anything under `logs/<N>_*/` after a
-  run completes. Rubric iteration happens on copies, in `scoring/` workspaces.
+- **Runs are immutable.** Never edit anything under `logs/<N>_*/` after a run completes.
+  Rubric iteration happens on copies, in `scoring/` workspaces.
 - **Every batch dir carries provenance**: `experiment.json` records kind
-  (generate | scoring_workspace), source, git commit, dataset/judges hashes, and run
-  parameters. Workspaces additionally track judge versions in `scorer_versions.json`.
+  (generate | replay | scoring_workspace), source, git commit, dataset/judges hashes, and
+  run parameters. Workspaces additionally track judge versions in `scorer_versions.json`.
+  Workspaces can be created from `generate` and `replay` runs alike.
 - **Judging failures are never silent.** A judge whose output violates its declared
   scale is recorded as unscored (inspect's `Score.unscored()`): the raw judge output
   and the failure reason are kept per-sample (`metadata.scoring_error`), and the NaN
@@ -52,5 +59,6 @@ docs/           This documentation.
 ## Workflows
 
 - Run an eval: docs/run_eval.md
+- Judge pre-generated responses (replay): docs/run_replay.md
 - Iterate on judge rubrics (re-scoring): docs/run_rescoring.md
 - All parameters: docs/evaluation_parameters.md

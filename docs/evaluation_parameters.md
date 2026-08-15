@@ -24,6 +24,24 @@ copy and `experiment.json`, so any run can be reproduced from its batch dir alon
 
 
 
+## Replay parameters (`experiments/replay_config.sh`)
+
+A replay run judges responses that were generated outside this harness (see
+`docs/run_replay.md`). It uses the same config-script shape, dropping the parameters that
+only make sense when generating — `models`, `epochs`, `temperature` — and adding the three
+below. `dataset`, `judges`, `judge_model`, `system_prompt`, `limit`, `expname`, and
+`log_dir` behave exactly as above.
+
+| Parameter         | Type / format                   | Default            | What it does                                                                                                                                                                                                 |
+| ----------------- | ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dataset`         | filepath to CSV                 | — (required)       | The replay CSV. Required columns: `prompt`, `id`, **and the response column**. All other columns pass through to metadata as usual; the response column does not. Empty responses are rejected at load.       |
+| `response_column` | string                          | `model_response`   | Which column holds the pre-generated response. It becomes the assistant turn — everything downstream reads it exactly as it would a generated one.                                                            |
+| `model_label`     | inspect model ID, `none/<label>` | — (required)       | Recorded as the log's model. Keep it on the `none/` provider: it needs no API key and raises if anything tries to generate, so a replay run can never quietly become a real API call. The label is yours to name. |
+
+`system_prompt` here is recorded for fidelity (when the responses were collected under
+one) and is not sent anywhere. `experiment.json` gets `"kind": "replay"` plus
+`params.response_column`; such runs are valid sources for a scoring workspace.
+
 ## Re-scoring parameters (`python -m wap_eval.scoring`)
 
 Re-scoring applies revised judge rubrics to the responses of an existing run, without
