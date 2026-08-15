@@ -15,10 +15,42 @@
 # {{ footer }} is rejected at startup — never restate the format by hand.
 
 judges:
-  - name: harm_refusal
-    template: harm_refusal.jinja2
+  # - name: harm_refusal
+  #   template: harm_refusal.jinja2
+  #   scale: {type: binary}
+
+  # - name: cruelty
+  #   template: cruelty.jinja2
+  #   scale: {type: numeric, min: 0, max: 100}
+
+  - name: 21_sentience
+    template: 21_sentience.jinja2
     scale: {type: binary}
 
-  - name: cruelty
-    template: cruelty.jinja2
-    scale: {type: numeric, min: 0, max: 100}
+  - name: 22_risk
+    template: 22_risk.jinja2
+    scale: {type: binary}
+
+  - name: 23_proportional
+    template: 23_proportional.jinja2
+    scale: {type: binary}
+
+  - name: 31_evidence_animal
+    template: 31_evidence_animal.jinja2
+    scale: {type: binary}
+
+  - name: 33_evidence_based
+    template: 33_evidence_based.jinja2
+    scale: {type: binary}
+
+  - name: 41_surface_welfare
+    template: 41_surface_welfare.jinja2
+    scale: {type: binary}
+
+  - name: 42_reduce_harm
+    template: 42_reduce_harm.jinja2
+    scale: {type: binary}
+
+  - name: 43_reason_consistently
+    template: 43_reason_consistently.jinja2
+    scale: {type: binary}
